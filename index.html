@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Guessing Game</title>
+    <style>
+        :root {
+            --primary-color: #9b59b6; /* Purple for buttons */
+            --secondary-color: #2c3e50; /* Dark blue for text */
+            --accent-color: #ffd700; /* Gold for stars */
+            --close-color: #e74c3c; /* Red for hide button */
+            --background-gradient: linear-gradient(to bottom right, #3498db, #9b59b6); /* Blue to purple gradient */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--background-gradient);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            position: relative;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h1 {
+            color: white;
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+
+        p {
+            color: var(--secondary-color);
+            font-size: 1.1em;
+            margin-bottom: 25px;
+        }
+
+        .button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .button:hover {
+            background-color: #8e44ad; /* Darker purple on hover */
+            transform: translateY(-2px);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        #word-container {
+            position: relative;
+            margin-top: 30px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        #word-container.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #word-container::before {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 20px solid white;
+        }
+
+        #word-container h2 {
+            font-size: 1.5em;
+            color: var(--secondary-color);
+            margin: 10px 0;
+        }
+
+        #hide-word-btn {
+            background-color: var(--close-color);
+            color: white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 24px;
+            line-height: 40px;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        #hide-word-btn:hover {
+            background-color: #c0392b; /* Darker red on hover */
+        }
+
+        .star {
+            position: absolute;
+            font-size: 24px;
+            color: var(--accent-color);
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .star1 { top: 10px; left: 10px; }
+        .star2 { top: 10px; right: 10px; }
+        .star3 { bottom: 10px; left: 10px; }
+        .star4 { bottom: 10px; right: 10px; }
+
+        .container.word-shown .star {
+            opacity: 1;
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 20px; }
+            h1 { font-size: 2em; }
+            p { font-size: 1em; }
+            .button { padding: 10px 20px; font-size: 0.9em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="star star1">★</div>
+        <div class="star star2">★</div>
+        <div class="star star3">★</div>
+        <div class="star star4">★</div>
+        <h1>Word Guessing Game</h1>
+        <p>Click "Get Word" to reveal a random word. Act it out for your friends to guess!</p>
+        <button class="button" id="get-word-btn">Get Word</button>
+        <div id="word-container">
+            <h2>English Word: <span id="english-word"></span></h2>
+            <h2>Hindi Meaning: <span id="hindi-meaning"></span></h2>
+            <button class="button" id="hide-word-btn"><span>×</span></button>
+        </div>
+    </div>
+
+    <script>
+        const words = [
+ { english: "Cat", hindi: "बिल्ली" },
+    { english: "Horse", hindi: "घोड़ा" },
+    { english: "Monkey", hindi: "बंदर" },
+    { english: "Tiger", hindi: "बाघ" },
+    { english: "Cow", hindi: "गाय" },
+    { english: "Sheep", hindi: "भेड़" },
+    { english: "Goat", hindi: "बकरी" },
+    { english: "Pig", hindi: "सूअर" },
+    { english: "Rabbit", hindi: "खरगोश" },
+    { english: "Deer", hindi: "हिरण" },
+    { english: "Bear", hindi: "भालू" },
+    { english: "Wolf", hindi: "भेड़िया" },
+    { english: "Fox", hindi: "लोमड़ी" },
+    { english: "Chair", hindi: "कुर्सी" },
+    { english: "Table", hindi: "मेज" },
+    { english: "Bed", hindi: "बिस्तर" },
+    { english: "Door", hindi: "दरवाजा" },
+    { english: "Window", hindi: "खिड़की" },
+    { english: "Mirror", hindi: "दर्पण" },
+    { english: "Clock", hindi: "घड़ी" },
+    { english: "Lamp", hindi: "दीपक" },
+    { english: "Fan", hindi: "पंखा" },
+    { english: "Television", hindi: "टेलीविजन" },
+    { english: "Refrigerator", hindi: "फ्रिज" },
+    { english: "Oven", hindi: "ओवन" },
+    { english: "Microwave", hindi: "माइक्रोवेव" },
+    { english: "Toaster", hindi: "टोस्टर" },
+    { english: "Blender", hindi: "ब्लेंडर" },
+    { english: "Banana", hindi: "केला" },
+    { english: "Mango", hindi: "आम" },
+    { english: "Grape", hindi: "अंगूर" },
+    { english: "Strawberry", hindi: "स्ट्रॉबेरी" },
+    { english: "Pineapple", hindi: "अनानास" },
+    { english: "Watermelon", hindi: "तरबूज" },
+    { english: "Coconut", hindi: "नारियल" },
+    { english: "Carrot", hindi: "गाजर" },
+    { english: "Potato", hindi: "आलू" },
+    { english: "Tomato", hindi: "टमाटर" },
+    { english: "Onion", hindi: "प्याज" },
+    { english: "Garlic", hindi: "लहसुन" },
+    { english: "Ginger", hindi: "अदरक" },
+    { english: "Rice", hindi: "चावल" },
+    { english: "Bread", hindi: "रोटी" },
+    { english: "Doctor", hindi: "डॉक्टर" },
+    { english: "Teacher", hindi: "शिक्षक" },
+    { english: "Engineer", hindi: "इंजीनियर" },
+    { english: "Farmer", hindi: "किसान" },
+    { english: "Police", hindi: "पुलिस" },
+    { english: "Firefighter", hindi: "अग्निशामक" },
+    { english: "Chef", hindi: "रसोइया" },
+    { english: "Artist", hindi: "कलाकार" },
+    { english: "Musician", hindi: "संगीतकार" },
+    { english: "Actor", hindi: "अभिनेता" },
+    { english: "Writer", hindi: "लेखक" },
+    { english: "Scientist", hindi: "वैज्ञानिक" },
+    { english: "Pilot", hindi: "पायलट" },
+    { english: "Driver", hindi: "चालक" },
+    { english: "Tailor", hindi: "दर्जी" },
+    { english: "Running", hindi: "दौड़ना" },
+    { english: "Jumping", hindi: "कूदना" },
+    { english: "Swimming", hindi: "तैरना" },
+    { english: "Cycling", hindi: "साइकिल चलाना" },
+    { english: "Dancing", hindi: "नृत्य करना" },
+    { english: "Singing", hindi: "गाना" },
+    { english: "Painting", hindi: "चित्रकारी" },
+    { english: "Cooking", hindi: "खाना बनाना" },
+    { english: "Reading", hindi: "पढ़ना" },
+    { english: "Writing", hindi: "लिखना" },
+    { english: "Playing", hindi: "खेलना" },
+    { english: "Sleeping", hindi: "सोना" },
+    { english: "Eating", hindi: "खाना" },
+    { english: "Drinking", hindi: "पीना" },
+    { english: "Talking", hindi: "बात करना" },
+    { english: "Mountain", hindi: "पहाड़" },
+    { english: "Lake", hindi: "झील" },
+    { english: "Ocean", hindi: "महासागर" },
+    { english: "Desert", hindi: "रेगिस्तान" },
+    { english: "Valley", hindi: "घाटी" },
+    { english: "Cave", hindi: "गुफा" },
+    { english: "Island", hindi: "द्वीप" },
+    { english: "Beach", hindi: "समुद्र तट" },
+    { english: "Hill", hindi: "पहाड़ी" },
+    { english: "Field", hindi: "खेत" },
+    { english: "Garden", hindi: "बगीचा" },
+    { english: "Park", hindi: "पार्क" },
+    { english: "Road", hindi: "सड़क" },
+    { english: "Bridge", hindi: "पुल" },
+    { english: "Building", hindi: "इमारत" },
+    { english: "City", hindi: "शहर" },
+    { english: "Village", hindi: "गाँव" },
+    { english: "Country", hindi: "देश" },
+    { english: "World", hindi: "दुनिया" },
+    { english: "Bicycle", hindi: "साइकिल" },
+    { english: "Motorcycle", hindi: "मोटरसाइकिल" },
+    { english: "Bus", hindi: "बस" },
+    { english: "Train", hindi: "ट्रेन" },
+    { english: "Airplane", hindi: "हवाई जहाज" },
+    { english: "Boat", hindi: "नाव" },
+    { english: "Ship", hindi: "जहाज" },
+    { english: "Helicopter", hindi: "हेलीकॉप्टर" },
+    { english: "Scooter", hindi: "स्कूटर" },
+    { english: "Truck", hindi: "ट्रक" },
+    { english: "Taxi", hindi: "टैक्सी" },
+    { english: "Ambulance", hindi: "एम्बुलेंस" },
+    { english: "Fire Truck", hindi: "अग्निशमन वाहन" },
+    { english: "Police Car", hindi: "पुलिस कार" },
+    { english: "Subway", hindi: "मेट्रो" },
+    { english: "Shirt", hindi: "शर्ट" },
+    { english: "Pants", hindi: "पैंट" },
+    { english: "Dress", hindi: "पोशाक" },
+    { english: "Skirt", hindi: "स्कर्ट" },
+    { english: "Jacket", hindi: "जैकेट" },
+    { english: "Coat", hindi: "कोट" },
+    { english: "Hat", hindi: "टोपी" },
+    { english: "Cap", hindi: "कैप" },
+    { english: "Gloves", hindi: "दस्ताने" },
+    { english: "Scarf", hindi: "स्कार्फ" },
+    { english: "Belt", hindi: "बेल्ट" },
+    { english: "Tie", hindi: "टाई" },
+    { english: "Socks", hindi: "मोजे" },
+    { english: "Shoes", hindi: "जूते" },
+    { english: "Boots", hindi: "बूट" },
+    { english: "Sandals", hindi: "चप्पल" },
+    { english: "Glasses", hindi: "चश्मा" },
+    { english: "Sunglasses", hindi: "धूप का चश्मा" },
+    { english: "Umbrella", hindi: "छाता" },
+    { english: "Bag", hindi: "बैग" },
+    { english: "Wallet", hindi: "बटुआ" },
+    { english: "Purse", hindi: "पर्स" },
+    { english: "Necklace", hindi: "हार" },
+    { english: "Bracelet", hindi: "कंगन" },
+    { english: "Ring", hindi: "अंगूठी" },
+    { english: "Earrings", hindi: "बالی" },
+    { english: "T-shirt", hindi: "टी-शर्ट" },
+    { english: "Jeans", hindi: "जीन्स" },
+    { english: "Sweater", hindi: "स्वेटर" },
+    { english: "Hoodie", hindi: "हुडी" },
+    { english: "Shorts", hindi: "शॉर्ट्स" },
+    { english: "Suit", hindi: "सूट" },
+    { english: "Blouse", hindi: "ब्लाउज" },
+    { english: "Sari", hindi: "साड़ी" },
+    { english: "Kurta", hindi: "कुरता" },
+    { english: "Pajamas", hindi: "पजामा" },
+    { english: "Robe", hindi: "रोब" },
+    { english: "Slippers", hindi: "चप्पल" },
+    { english: "Flip-flops", hindi: "फ्लिप-फ्लॉप" },
+    { english: "High Heels", hindi: "हाई हील्स" },
+    { english: "Red", hindi: "लाल" },
+    { english: "Blue", hindi: "नीला" },
+    { english: "Green", hindi: "हरा" },
+    { english: "Yellow", hindi: "पीला" },
+    { english: "Purple", hindi: "बैंगनी" },
+    { english: "Pink", hindi: "गुलाबी" },
+    { english: "Brown", hindi: "भूरा" },
+    { english: "Black", hindi: "काला" },
+    { english: "White", hindi: "सफेद" },
+    { english: "Gray", hindi: "ग्रे" },
+    { english: "Silver", hindi: "चांदी" },
+    { english: "Gold", hindi: "सोना" },
+    { english: "Happy", hindi: "खुश" },
+    { english: "Sad", hindi: "उदास" },
+    { english: "Angry", hindi: "गुस्सा" },
+    { english: "Surprised", hindi: "आश्चर्यचकित" },
+    { english: "Scared", hindi: "डरा हुआ" },
+    { english: "Tired", hindi: "थका हुआ" },
+    { english: "Excited", hindi: "उत्साहित" },
+    { english: "Bored", hindi: "उबाऊ" },
+    { english: "Confused", hindi: "उलझन में" },
+    { english: "Proud", hindi: "गर्वित" },
+    { english: "Shy", hindi: "शर्मीला" },
+    { english: "Calm", hindi: "शांत" },
+    { english: "Energetic", hindi: "ऊर्जावान" },
+    { english: "Hungry", hindi: "भूखा" },
+    { english: "Thirsty", hindi: "प्यासा" },
+    { english: "Cold", hindi: "ठंडा" },
+    { english: "Hot", hindi: "गरम" },
+    { english: "Sick", hindi: "बीमार" },
+    { english: "Healthy", hindi: "स्वस्थ" },
+    { english: "Strong", hindi: "मजबूत" },
+    { english: "Weak", hindi: "कमजोर" },
+    { english: "Big", hindi: "बड़ा" },
+    { english: "Small", hindi: "छोटा" },
+    { english: "Tall", hindi: "लंबा" },
+    { english: "Short", hindi: "छोटा" },
+    { english: "Fast", hindi: "तेज" },
+    { english: "Slow", hindi: "धीमा" },
+    { english: "Loud", hindi: "जोरदार" },
+    { english: "Quiet", hindi: "शांत" },
+    { english: "Clean", hindi: "साफ" },
+    { english: "Dirty", hindi: "गंदा" },
+    { english: "New", hindi: "नया" },
+    { english: "Old", hindi: "पुराना" },
+    { english: "Young", hindi: "युवा" },
+    { english: "Rich", hindi: "धनी" },
+    { english: "Poor", hindi: "गरीब" },
+    { english: "Head", hindi: "सिर" },
+    { english: "Hair", hindi: "बाल" },
+    { english: "Eye", hindi: "आँख" },
+    { english: "Ear", hindi: "कान" },
+    { english: "Nose", hindi: "नाक" },
+    { english: "Mouth", hindi: "मुँह" },
+    { english: "Tooth", hindi: "दाँत" },
+    { english: "Tongue", hindi: "जीभ" },
+    { english: "Neck", hindi: "गर्दन" },
+    { english: "Shoulder", hindi: "कंधा" },
+    { english: "Arm", hindi: "बांह" },
+    { english: "Elbow", hindi: "कोहनी" },
+    { english: "Hand", hindi: "हाथ" },
+    { english: "Finger", hindi: "उंगली" },
+    { english: "Thumb", hindi: "अंगूठा" },
+    { english: "Chest", hindi: "छाती" },
+    { english: "Back", hindi: "पीठ" },
+    { english: "Stomach", hindi: "पेट" },
+    { english: "Leg", hindi: "पैर" },
+    { english: "Knee", hindi: "घुटना" },
+    { english: "Ankle", hindi: "टखना" },
+    { english: "Foot", hindi: "पैर" },
+    { english: "Toe", hindi: "पैर की उंगली" },
+    { english: "Heart", hindi: "दिल" },
+    { english: "Brain", hindi: "मस्तिष्क" },
+    { english: "Lung", hindi: "फेफड़ा" },
+    { english: "Liver", hindi: "जिगर" },
+    { english: "Kidney", hindi: "गुर्दा" },
+    { english: "Skin", hindi: "त्वचा" },
+    { english: "Bone", hindi: "हड्डी" },
+    { english: "Muscle", hindi: "मांसपेशी" },
+    { english: "Blood", hindi: "खून" },
+    { english: "Nail", hindi: "नाखून" },
+    { english: "Beard", hindi: "दाढ़ी" },
+    { english: "Mustache", hindi: "मूंछ" },
+    { english: "Eyebrow", hindi: "भौंह" },
+    { english: "Eyelash", hindi: "पलक" },
+    { english: "Cheek", hindi: "गाल" },
+    { english: "Chin", hindi: "ठोड़ी" },
+    { english: "Forehead", hindi: "माथा" },
+    { english: "Star", hindi: "तारा" },
+    { english: "Cloud", hindi: "बादल" },
+    { english: "Rain", hindi: "बारिश" },
+    { english: "Snow", hindi: "बर्फ" },
+    { english: "Wind", hindi: "हवा" },
+    { english: "Storm", hindi: "तूफान" },
+    { english: "Thunder", hindi: "गरज" },
+    { english: "Lightning", hindi: "बिजली" },
+    { english: "Fog", hindi: "कोहरा" },
+    { english: "Rainbow", hindi: "इंद्रधनुष" },
+    { english: "Summer", hindi: "गर्मी" },
+    { english: "Winter", hindi: "सर्दी" },
+    { english: "Spring", hindi: "वसंत" },
+    { english: "Autumn", hindi: "पतझड़" },
+    { english: "Monsoon", hindi: "मानसून" },
+    { english: "Heat", hindi: "गर्मी" },
+    { english: "Cold", hindi: "ठंड" },
+    { english: "Humidity", hindi: "नमी" },
+    { english: "Drought", hindi: "सूखा" },
+    { english: "Flood", hindi: "बाढ़" },
+    { english: "Hurricane", hindi: "तूफान" },
+    { english: "Tornado", hindi: "बवंडर" },
+    { english: "Earthquake", hindi: "भूकंप" },
+    { english: "Volcano", hindi: "ज्वालामुखी" },
+    { english: "Tsunami", hindi: "सुनामी" },
+    { english: "Avalanche", hindi: "हिमस्खलन" },
+    { english: "Blizzard", hindi: "बर्फीला तूफान" },
+    { english: "Hail", hindi: "ओला" },
+    { english: "Computer", hindi: "कंप्यूटर" },
+    { english: "Laptop", hindi: "लैपटॉप" },
+    { english: "Tablet", hindi: "टैबलेट" },
+    { english: "Smartphone", hindi: "स्मार्टफोन" },
+    { english: "Camera", hindi: "कैमरा" },
+    { english: "Headphones", hindi: "हेडफ़ोन" },
+    { english: "Speaker", hindi: "स्पीकर" },
+    { english: "Microphone", hindi: "माइक्रोफ़ोन" },
+    { english: "Printer", hindi: "प्रिंटर" },
+    { english: "Scanner", hindi: "स्कैनर" },
+    { english: "Keyboard", hindi: "कीबोर्ड" },
+    { english: "Mouse", hindi: "माउस" },
+    { english: "Monitor", hindi: "मॉनिटर" },
+    { english: "Router", hindi: "राउटर" },
+    { english: "Modem", hindi: "मॉडेम" },
+    { english: "USB", hindi: "यूएसबी" },
+    { english: "Battery", hindi: "बैटरी" },
+    { english: "Charger", hindi: "चार्जर" },
+    { english: "Cable", hindi: "केबल" },
+    { english: "Internet", hindi: "इंटरनेट" },
+    { english: "Website", hindi: "वेबसाइट" },
+    { english: "Email", hindi: "ईमेल" },
+    { english: "Software", hindi: "सॉफ़्टवेयर" },
+    { english: "Hardware", hindi: "हार्डवेयर" },
+    { english: "Virus", hindi: "वायरस" },
+    { english: "Firewall", hindi: "फ़ायरवॉल" },
+    { english: "Server", hindi: "सर्वर" },
+    { english: "Database", hindi: "डेटाबेस" },
+    { english: "Algorithm", hindi: "एल्गोरिथम" },
+    { english: "Program", hindi: "प्रोग्राम" },
+    { english: "School", hindi: "स्कूल" },
+    { english: "College", hindi: "कॉलेज" },
+    { english: "University", hindi: "विश्वविद्यालय" },
+    { english: "Library", hindi: "पुस्तकालय" },
+    { english: "Hospital", hindi: "अस्पताल" },
+    { english: "Bank", hindi: "बैंक" },
+    { english: "Market", hindi: "बाजार" },
+    { english: "Shop", hindi: "दुकान" },
+    { english: "Restaurant", hindi: "रेस्टोरेंट" },
+    { english: "Hotel", hindi: "होटल" },
+    { english: "Airport", hindi: "हवाई अड्डा" },
+    { english: "Station", hindi: "स्टेशन" },
+    { english: "Zoo", hindi: "चिड़ियाघर" },
+    { english: "Museum", hindi: "संग्रहालय" },
+    { english: "Theater", hindi: "थिएटर" },
+    { english: "Cinema", hindi: "सिनेमा" },
+    { english: "Stadium", hindi: "स्टेडियम" },
+    { english: "Playground", hindi: "खेल का मैदान" },
+    { english: "Gym", hindi: "जिम" },
+    { english: "Swimming Pool", hindi: "तैराकी पूल" },
+    { english: "Pencil", hindi: "पेंसिल" },
+    { english: "Eraser", hindi: "रबड़" },
+    { english: "Ruler", hindi: "रूलर" },
+    { english: "Notebook", hindi: "नोटबुक" },
+    { english: "Backpack", hindi: "बैकपैक" },
+    { english: "Chalk", hindi: "चॉक" },
+    { english: "Blackboard", hindi: "ब्लैकबोर्ड" },
+    { english: "Desk", hindi: "डेस्क" },
+    { english: "Student", hindi: "छात्र" },
+    { english: "Principal", hindi: "प्रिंसिपल" }
+        ];
+
+        const getWordBtn = document.getElementById('get-word-btn');
+        const englishWordSpan = document.getElementById('english-word');
+        const hindiMeaningSpan = document.getElementById('hindi-meaning');
+        const wordContainer = document.getElementById('word-container');
+        const hideWordBtn = document.getElementById('hide-word-btn');
+        const container = document.querySelector('.container');
+
+        getWordBtn.addEventListener('click', () => {
+            const randomIndex = Math.floor(Math.random() * words.length);
+            const randomWord = words[randomIndex];
+            englishWordSpan.textContent = randomWord.english;
+            hindiMeaningSpan.textContent = randomWord.hindi;
+            wordContainer.classList.add('show');
+            container.classList.add('word-shown');
+        });
+
+        hideWordBtn.addEventListener('click', () => {
+            wordContainer.classList.remove('show');
+            container.classList.remove('word-shown');
+        });
+    </script>
+</body>
+</html>
